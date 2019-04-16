@@ -1,0 +1,208 @@
+# Elasticluster Configuration Template
+# ====================================
+#
+# This is a TEMPLATE CONFIGURATION file for ElastiCluster.  You will
+# need to edit it and replace some placeholder values before the file
+# can be read without errors and you can actually start creating
+# clusters.  A complete reference for the syntax and contents of this
+# file can be found at:
+# http://elasticluster.readthedocs.io/en/latest/configure.html
+#
+# A set of commented examples can be found at:
+# https://github.com/gc3-uzh-ch/elasticluster/tree/master/examples
+
+
+# Cloud Section
+# =============
+#
+# A `cloud` section named `<name>` starts with:
+#
+# [cloud/<name>]
+#
+# The cloud section defines all properties needed to connect to a
+# specific cloud provider. See
+# http://elasticluster.readthedocs.io/en/latest/configure.html#cloud-section
+# for the different options.
+#
+# You can define as many cloud sections you want, assuming you have
+# access to different cloud providers and want to deploy different
+# clusters in different clouds. The mapping between cluster and cloud
+# provider is done in the `cluster` section (see later).
+#
+# Examples
+# --------
+#
+# A larger set of commented examples can be found at:
+# https://github.com/gc3-uzh-ch/elasticluster/tree/master/examples
+#
+
+# The following example should be easy to adapt to any OpenStack-based
+# cloud::
+#
+[cloud/openstack]
+provider=openstack
+#
+# the following keys are optional: if missing, value will be taken from the
+# corresponding `OS_*` environmental variable (e.g., instead of writing
+# `password=` here, you can set `OS_PASSWORD` in the environment)
+#
+auth_url=https://openstack.example.com:5000/v2.0
+project_name=xxx
+username=xxx
+password=xxx
+region_name=xxx
+#
+# if `identity_api_version` is missing (and `OS_IDENTITY_API_VERSION` is not set
+# in the environment) then ElastiCluster will try to autodetect
+#
+#identity_api_version=2
+
+
+
+# Login Section
+# ===============
+#
+# A `login` section named `<name>` starts with:
+#
+# [login/<name>]
+#
+# This section contains information on how to access the instances
+# started on the cloud, including SSH user name and the identity keys
+# to use.
+#
+# For more details, see: http://elasticluster.readthedocs.io/en/latest/configure.html#login-section
+
+# Examples
+# --------
+#
+# A larger set of commented examples can be found at:
+# https://github.com/gc3-uzh-ch/elasticluster/tree/master/examples
+#
+
+# For a typical ubuntu machine, both on Amazon and most OpenStack
+# providers, these values should be fine:
+
+[login/ubuntu]
+image_user=ubuntu
+image_sudo=True
+user_key_name=tmaps
+user_key_private=~/.ssh/tmaps
+user_key_public=~/.ssh/tmaps.pub
+
+# For Google Compute Engine, something like the following should be
+# used instead.
+#
+# In contrast to other cloud providers, GCE creates a personal account on each
+# VM so you effectively re-use the same `[login/google]` section across
+# different VM images.
+
+# Setup Section
+# =============
+#
+# A `setup` section named `<name>` starts with:
+#
+# [setup/<name>]
+#
+# This section contain information on *how to setup* a cluster. After
+# the cluster is started, elasticluster will run Ansible (the "setup
+# provider") in order to configure it.
+#
+# A ``setup`` section is mostly independent of any other, and can be
+# easily re-used across multiple clouds and base OS images -- that's the
+# whole point of ElastiCluster!
+#
+# Further details at: http://elasticluster.readthedocs.io/en/latest/configure.html#setup-section
+
+# Examples
+# --------
+#
+# A larger set of commented examples can be found at:
+# https://github.com/gc3-uzh-ch/elasticluster/tree/master/examples
+#
+
+# a `setup` section is mostly independent of any other
+
+[setup/gbids_p]
+provider=ansible
+data_groups=nfs-server,data-storage
+app_groups=gbids,docker 
+registry_groups=docker-registry
+# worker_groups=slurm_worker
+# `submit` nodes are normally not used but are available if
+# you want to load-balance SSH access to the cluster
+# submit_groups=slurm_submit,glusterfs_client
+
+# install NIS/YP to manage cluster users
+# global_var_multiuser_cluster=yes
+
+
+# Cluster Section
+# ===============
+#
+# A `cluster` section named `<name>` starts with:
+#
+# [cluster/<name>]
+#
+# The cluster section defines a `template` for a cluster. This section
+# has references to each one of the other sections and define the
+# image to use, the default number of compute nodes and the security
+# group.
+#
+# Some configuration keys can be overridden for specific node kinds.
+# The way to do this is to create a section named like this::
+#
+#     [cluster/<name>/<kind>]
+#
+# Any configuration specified in this section would take precedence over
+# the values given in section ``[cluster/<name>]``, but only for nodes
+# of class ``<kind>``.
+
+# Examples
+# --------
+#
+# A larger set of commented examples can be found at:
+# https://github.com/gc3-uzh-ch/elasticluster/tree/master/examples
+#
+
+# a simple example, running a SoGE cluster on GCE
+
+[cluster/gbids_p]
+setup=gbids_p
+data_nodes=1
+app_nodes=1
+registry_nodes=1
+ssh_to=app
+
+
+# this is cloud-specific info (using OpenStack for the example)
+cloud=openstack
+
+# uzh-only interface
+#network_ids=c86b320c-9542-4032-a951-c8a068894cc2
+
+# private interface
+#network_ids=281ab00c-121d-4398-9637-362050e885bd
+
+security_group=default
+
+# Ubuntu 18.04
+image_id=b95cc56c-c200-44c7-a68c-091c981c6b8a
+
+# `login` info is -in theory- image-specific
+login=ubuntu
+
+[cluster/gbids_p/data]
+flavor=1cpu-4ram-hpc
+network_ids=281ab00c-121d-4398-9637-362050e885bd
+
+[cluster/gbids_p/app]
+flavor=1cpu-4ram-hpc
+network_ids=c86b320c-9542-4032-a951-c8a068894cc2,281ab00c-121d-4398-9637-362050e885bd
+
+[cluster/gbids_p/registry]
+flavor=1cpu-4ram-hpc
+security_group=default,web-app
+network_ids=281ab00c-121d-4398-9637-362050e885bd
+
+#[cluster/slurm-on-ubuntu18/worker]
+#flavor=2cpu-8ram-hpc
