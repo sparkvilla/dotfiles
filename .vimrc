@@ -23,7 +23,7 @@ call pathogen#infect()
 
 " Setting vim-colors-solarized
 " cd ~/.vim/bundle
-" git clone git://github.com/altercation/vim-colors-solarized.git
+" git clone git://github.com/altercation/solarized.git
 " It worked with this: cp .vim/bundle/solarized/vim-colors-solarized/colors/solarized.vim ~/.vim/colors/
 let g:solarized_termcolors=256
 set t_Co=256
